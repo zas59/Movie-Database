@@ -85,4 +85,4 @@ def get_movie_genres(movie_obj):
             movie_genres += ', '
     return movie_genres
 
-'''app.run(debug=True)'''
+app.run(debug=True)
