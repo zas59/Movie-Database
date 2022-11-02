@@ -1,11 +1,12 @@
 '''This is a basic Flask app for a movie database. There is a hard-coded list of 3 movies
    that will be chosen at random to be displayed.'''
-import random
 import os
+import random
 import requests
 from flask import Flask, render_template
 from dotenv import load_dotenv, find_dotenv
-
+from flask_login import LoginManager
+login_manager = LoginManager()
 
 load_dotenv(find_dotenv())
 
@@ -33,9 +34,9 @@ def get_movie_data():
     movie_image = get_movie_image(current_movie, movie_list)
     movie_genres = get_movie_genres(movie_obj)
 
-    return render_template('project1html.html', movie_title = movie_obj['title'],
+    return render_template('md.html', movie_title = movie_obj['title'],
      movie_tagline = movie_obj['tagline'], movie_genre_list = movie_genres,
-     movie_img = movie_image, wiki_link = movie_wiki_link)
+     movie_img = movie_image, wiki_link = movie_wiki_link, movie_id = current_movie)
 
 def get_wiki_link(movie_obj):
     '''Takes in movie object and returns the wiki link for that movie.'''

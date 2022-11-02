@@ -12,6 +12,7 @@
                 margin-right: auto;
             }
             a{text-align: center}
+            form{text-align: center;}
         </style>
     </head>
     <body style = "background-color: indianred">
@@ -21,5 +22,16 @@
         <h4>{{movie_genre_list}}</h4>
         <img src = '{{movie_img}}' alt = "Movie Poster" style="width:50%;">
         <a href="{{wiki_link}}">To read more info about this movie, click here!</a>
+        <h1>Reviews</h1>
+        <form>
+            <label for="MovieID">Movie Id:</label>
+            <input type="text" id="MovieID" name="MovieID" value="{{movie_id}}" readonly>
+            <label for="rating">Rating (1-10):</label>
+            <input type="text" id="rating" name="rating" value=""><br><br>
+            <textarea rows = "5" cols = "50" name = "review">
+                Leave your review here!
+            </textarea>
+            <input type="submit" value="Submit">
+        </form>
     </body>
 </html>
