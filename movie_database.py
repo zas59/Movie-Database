@@ -1,9 +1,10 @@
 '''This is a basic Flask app for a movie database. There is a hard-coded list of 3 movies
    that will be chosen at random to be displayed.'''
-import os
 import random
+import os
 import requests
 from flask import Flask, render_template
+from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv, find_dotenv
 from flask_login import LoginManager
 login_manager = LoginManager()
@@ -11,9 +12,24 @@ login_manager = LoginManager()
 load_dotenv(find_dotenv())
 
 app = Flask(__name__)
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv('DATABASE_URL')
+db = SQLAlchemy(app)
+
+class Review(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    movie_id = db.Column(db.Integer, nullable=False)
+    rating = db.Column(db.Integer, nullable=False)
+    comment = db.Column(db.String(500), nullable=False)
+
+    def __repr__(self) ->str:
+        return f'{self.username} gives this movie a {self.rating}/10: {self.comment}'
+
+with app.app_context():
+    db.create_all()
 
 @app.route('/')
-def get_movie_data():
+def index():
     '''Base function that runs evry time web page is refreshed.
        Gets TMDB json object for a movie and calls necessary functions for other info.'''
     movie_list = ['8193', '20352', '346364']
@@ -33,10 +49,12 @@ def get_movie_data():
     movie_wiki_link = get_wiki_link(movie_obj)
     movie_image = get_movie_image(current_movie, movie_list)
     movie_genres = get_movie_genres(movie_obj)
+    curr_movie_reviews = get_reviews(current_movie)
 
     return render_template('md.html', movie_title = movie_obj['title'],
      movie_tagline = movie_obj['tagline'], movie_genre_list = movie_genres,
-     movie_img = movie_image, wiki_link = movie_wiki_link, movie_id = current_movie)
+     movie_img = movie_image, wiki_link = movie_wiki_link, movie_id = current_movie,
+     movie_reviews = curr_movie_reviews)
 
 def get_wiki_link(movie_obj):
     '''Takes in movie object and returns the wiki link for that movie.'''
@@ -86,4 +104,10 @@ def get_movie_genres(movie_obj):
             movie_genres += ', '
     return movie_genres
 
-app.run(debug=True)
+def get_reviews(current_movie):
+    current_movie = int(current_movie)
+    reviews = Review.query.filter_by(movie_id = current_movie)
+    all_reviews = repr(reviews)
+    return all_reviews
+
+'''app.run(debug=True)'''

@@ -22,16 +22,18 @@
         <h4>{{movie_genre_list}}</h4>
         <img src = '{{movie_img}}' alt = "Movie Poster" style="width:50%;">
         <a href="{{wiki_link}}">To read more info about this movie, click here!</a>
-        <h1>Reviews</h1>
+        <h1>Seen this movie? Leave a Review:</h1>
         <form>
             <label for="MovieID">Movie Id:</label>
             <input type="text" id="MovieID" name="MovieID" value="{{movie_id}}" readonly>
             <label for="rating">Rating (1-10):</label>
             <input type="text" id="rating" name="rating" value=""><br><br>
             <textarea rows = "5" cols = "50" name = "review">
-                Leave your review here!
+                Leave your review here! (Limit 500 characters)
             </textarea>
             <input type="submit" value="Submit">
         </form>
+        <h2>User Reviews</h2>
+        <h3>{{movie_reviews}}</h3>
     </body>
 </html>
