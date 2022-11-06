@@ -3,13 +3,13 @@
 import random
 import os
 import requests
+import psycopg2
 from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv, find_dotenv
-from flask_login import LoginManager
-login_manager = LoginManager()
 
 load_dotenv(find_dotenv())
+secret_key = "../.ssh/terraform"
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv('DATABASE_URL')
@@ -107,7 +107,7 @@ def get_movie_genres(movie_obj):
 def get_reviews(current_movie):
     current_movie = int(current_movie)
     reviews = Review.query.filter_by(movie_id = current_movie)
-    all_reviews = repr(reviews)
+    all_reviews = str(repr(reviews))
     return all_reviews
 
-'''app.run(debug=True)'''
+app.run(debug=True)
