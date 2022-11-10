@@ -4,18 +4,30 @@ import random
 import os
 import requests
 import psycopg2
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from urllib.parse import urlparse, urljoin
 from dotenv import load_dotenv, find_dotenv
 
 load_dotenv(find_dotenv())
-secret_key = "../.ssh/terraform"
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv('DATABASE_URL')
-db = SQLAlchemy(app)
 
-class Review(db.Model):
+app.secret_key = 'abedisbatmannow'
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv('DATABASE_URL')
+app.config['USE_SESSION_FOR_NEXT'] = True
+
+db = SQLAlchemy(app)
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True)
+
+class Review(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     movie_id = db.Column(db.Integer, nullable=False)
@@ -28,8 +40,58 @@ class Review(db.Model):
 with app.app_context():
     db.create_all()
 
-@app.route('/')
-def index():
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    session['next'] = request.args.get('next')
+    return render_template('login.html')
+
+def is_safe_url(target):
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+    return test_url.scheme in ('http', 'https') and \
+           ref_url.netloc == test_url.netloc
+
+@app.route('/getloggedin', methods=['GET', 'POST'])
+def getloggedin():
+    form_data = request.form
+    uname = form_data['username']
+
+    user = User.query.filter_by(username=uname).first()
+    if not user:
+        flash('Unrecognized Username, Please Sign Up Below')
+        return redirect(url_for('signup'))
+
+    login_user(user)
+    return redirect(url_for('home'))
+
+    
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    return render_template('signup.html')
+
+@app.route('/getsignedup', methods=['GET', 'POST'])
+def getsignedup():
+    form_data = request.form
+    uname = form_data['username']
+    new_user = User(username = uname)
+    db.session.add(new_user)
+    db.session.commit()
+
+    return redirect(url_for('login'))
+
+@app.route('/logout', methods=['GET', 'POST'])
+@login_required
+def logout():
+    logout_user()
+    return 'You are logged out.'
+
+@app.route('/', methods=['GET', 'POST'])
+@login_required
+def home():
     '''Base function that runs evry time web page is refreshed.
        Gets TMDB json object for a movie and calls necessary functions for other info.'''
     movie_list = ['8193', '20352', '346364']
