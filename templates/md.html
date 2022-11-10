@@ -29,11 +29,14 @@
             <label for="rating">Rating (1-10):</label>
             <input type="text" id="rating" name="rating" value=""><br><br>
             <textarea rows = "5" cols = "100" name = "review">
-                Leave your review here! (Limit 500 characters)
+                                     Leave your review here!
             </textarea>
             <input type="submit" value="Submit Review">
         </form>
         <h2>User Reviews</h2>
-        <h3>{{movie_reviews}}</h3>
+        {% for comm in all_comments %}
+                <h3>{{comm.username}} {{comm.rating}}/10</h3>
+                <h4>{{comm.comment}}</h4>
+        {% endfor %}
     </body>
 </html>

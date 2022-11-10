@@ -1,5 +1,5 @@
-'''This is a basic Flask app for a movie database. There is a hard-coded list of 3 movies
-   that will be chosen at random to be displayed.'''
+'''This is a Flask app for a movie database. A user must log in to the site before viewing the movies. There is a hard-coded list of 3 movies
+   that will be chosen at random to be displayed. Users can comment their reviews of the movies and see other users reviews as well.'''
 import random
 import os
 import requests
@@ -29,10 +29,10 @@ class User(UserMixin, db.Model):
 
 class Review(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
+    username = db.Column(db.String(50), nullable=False)
     movie_id = db.Column(db.Integer, nullable=False)
     rating = db.Column(db.Integer, nullable=False)
-    comment = db.Column(db.String(500), nullable=False)
+    comment = db.Column(db.String(5000), nullable=False)
 
     def __repr__(self) ->str:
         return f'{self.username} gives this movie a {self.rating}/10: {self.comment}'
@@ -62,7 +62,6 @@ def getloggedin():
 
     user = User.query.filter_by(username=uname).first()
     if not user:
-        flash('Unrecognized Username, Please Sign Up Below')
         return redirect(url_for('signup'))
 
     login_user(user)
@@ -71,6 +70,7 @@ def getloggedin():
     
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
+    flash('Unrecognized username, please sign up below.')
     return render_template('signup.html')
 
 @app.route('/getsignedup', methods=['GET', 'POST'])
@@ -88,6 +88,22 @@ def getsignedup():
 def logout():
     logout_user()
     return 'You are logged out.'
+
+@app.route('/handle_rating_form', methods = ['GET', 'POST'])
+def handle_rating_form():
+    form_data = request.form
+    uname = current_user.username
+    mov_id = form_data['MovieID']
+    num_rating = int(form_data['rating'])
+    mov_comment = form_data['review']
+
+    new_review = Review(username = uname, movie_id =mov_id, rating=num_rating, comment=mov_comment)
+    db.session.add(new_review)
+    db.session.commit()
+
+    return redirect(url_for('home'))
+
+
 
 @app.route('/', methods=['GET', 'POST'])
 @login_required
@@ -111,12 +127,12 @@ def home():
     movie_wiki_link = get_wiki_link(movie_obj)
     movie_image = get_movie_image(current_movie, movie_list)
     movie_genres = get_movie_genres(movie_obj)
-    curr_movie_reviews = get_reviews(current_movie)
+    curr_mov_comments = Review.query.filter_by(movie_id = int(current_movie))
 
     return render_template('md.html', movie_title = movie_obj['title'],
      movie_tagline = movie_obj['tagline'], movie_genre_list = movie_genres,
      movie_img = movie_image, wiki_link = movie_wiki_link, movie_id = current_movie,
-     movie_reviews = curr_movie_reviews)
+     all_comments = curr_mov_comments)
 
 def get_wiki_link(movie_obj):
     '''Takes in movie object and returns the wiki link for that movie.'''
@@ -165,11 +181,5 @@ def get_movie_genres(movie_obj):
         if genre_counter != genre_count:
             movie_genres += ', '
     return movie_genres
-
-def get_reviews(current_movie):
-    current_movie = int(current_movie)
-    reviews = Review.query.filter_by(movie_id = current_movie)
-    all_reviews = str(repr(reviews))
-    return all_reviews
 
 app.run(debug=True)
