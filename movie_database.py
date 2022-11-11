@@ -2,12 +2,12 @@
    that will be chosen at random to be displayed. Users can comment their reviews of the movies and see other users reviews as well.'''
 import random
 import os
+from urllib.parse import urlparse, urljoin
 import requests
 import psycopg2
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from urllib.parse import urlparse, urljoin
 from dotenv import load_dotenv, find_dotenv
 
 load_dotenv(find_dotenv())
@@ -24,10 +24,12 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 
 class User(UserMixin, db.Model):
+    '''DB model for flask login'''
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True)
 
 class Review(UserMixin, db.Model):
+    '''DB model for user comments and ratings'''
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), nullable=False)
     movie_id = db.Column(db.Integer, nullable=False)
@@ -55,6 +57,7 @@ def is_safe_url(target):
 
 @app.route('/getloggedin', methods=['GET', 'POST'])
 def getloggedin():
+    '''If username is in system, redirects to home page. If not, redirects to signup page.'''
     form_data = request.form
     uname = form_data['username']
 
@@ -73,6 +76,7 @@ def signup():
 
 @app.route('/getsignedup', methods=['GET', 'POST'])
 def getsignedup():
+    '''Adds new users to login system'''
     form_data = request.form
     uname = form_data['username']
     new_user = User(username = uname)
@@ -89,6 +93,7 @@ def logout():
 
 @app.route('/handle_rating_form', methods = ['GET', 'POST'])
 def handle_rating_form():
+    '''Adds user reviews to database and redirects back to home page. (might display a new movie).'''
     form_data = request.form
     uname = current_user.username
     mov_id = form_data['MovieID']
@@ -106,8 +111,9 @@ def handle_rating_form():
 @app.route('/', methods=['GET', 'POST'])
 @login_required
 def home():
-    '''Base function that runs evry time web page is refreshed.
-       Gets TMDB json object for a movie and calls necessary functions for other info.'''
+    '''Base function that runs every time web page is refreshed.
+       Gets TMDB json object for a movie and calls necessary functions for other info.
+       Displays user reviews and has form to submit own review.'''
     movie_list = ['8193', '20352', '346364']
     current_movie = str(random.choice(movie_list))
     TMDB_LINK = 'https://api.themoviedb.org/3/movie/'
@@ -182,6 +188,7 @@ def get_movie_genres(movie_obj):
     return movie_genres
 
 def get_movie_rating(comment_obj):
+    '''Takes in object of all movie reviews and returns average user rating for given movie.'''
     total_score = 0
     num_comm = 0
     for comm in comment_obj:
