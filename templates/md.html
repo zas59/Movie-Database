@@ -33,7 +33,7 @@
             </textarea>
             <input type="submit" value="Submit Review">
         </form>
-        <h2>User Reviews</h2>
+        <h2>User Reviews | Average User Rating: {{avg_rating}}/10</h2>
         {% for comm in all_comments %}
                 <h3>{{comm.username}} {{comm.rating}}/10</h3>
                 <h4>{{comm.comment}}</h4>

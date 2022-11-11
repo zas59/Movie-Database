@@ -34,8 +34,6 @@ class Review(UserMixin, db.Model):
     rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.String(5000), nullable=False)
 
-    def __repr__(self) ->str:
-        return f'{self.username} gives this movie a {self.rating}/10: {self.comment}'
 
 with app.app_context():
     db.create_all()
@@ -128,11 +126,12 @@ def home():
     movie_image = get_movie_image(current_movie, movie_list)
     movie_genres = get_movie_genres(movie_obj)
     curr_mov_comments = Review.query.filter_by(movie_id = int(current_movie))
+    curr_mov_rating = get_movie_rating(curr_mov_comments)
 
     return render_template('md.html', movie_title = movie_obj['title'],
      movie_tagline = movie_obj['tagline'], movie_genre_list = movie_genres,
      movie_img = movie_image, wiki_link = movie_wiki_link, movie_id = current_movie,
-     all_comments = curr_mov_comments)
+     all_comments = curr_mov_comments, avg_rating=curr_mov_rating)
 
 def get_wiki_link(movie_obj):
     '''Takes in movie object and returns the wiki link for that movie.'''
@@ -181,5 +180,14 @@ def get_movie_genres(movie_obj):
         if genre_counter != genre_count:
             movie_genres += ', '
     return movie_genres
+
+def get_movie_rating(comment_obj):
+    total_score = 0
+    num_comm = 0
+    for comm in comment_obj:
+        total_score += comm.rating
+        num_comm += 1
+    avg_rating = float(total_score)/float(num_comm)
+    return round(avg_rating, 2)
 
 '''app.run(debug=True)'''
